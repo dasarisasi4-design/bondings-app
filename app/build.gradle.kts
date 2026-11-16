@@ -1,3 +1,4 @@
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,6 +8,7 @@ plugins {
 android {
     namespace = "com.bondings.app"
     compileSdk = 35
+
     defaultConfig {
         applicationId = "com.bondings.app"
         minSdk = 26
@@ -14,7 +16,19 @@ android {
         versionCode = 3
         versionName = "3.0"
     }
-    buildFeatures { compose = true }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        compose = true
+    }
+}
+
+kotlin {
+    jvmToolchain(17)
 }
 
 dependencies {
