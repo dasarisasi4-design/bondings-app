@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#100b19">
+<title>BONDINGS — Find your connection</title>
+<style>
+:root{--bg:#100b19;--panel:#1d1528;--panel2:#281d36;--pink:#ff4f9a;--purple:#9b5cff;--muted:#b7afc2;--line:#3b2c4a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#fff;font:15px Inter,system-ui,sans-serif}
+.app{max-width:1120px;margin:auto;padding:20px}.top{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.brand{font-size:24px;font-weight:900;letter-spacing:2px;background:linear-gradient(90deg,var(--pink),#bd83ff);color:transparent;background-clip:text}
+.tag{color:var(--muted);font-size:12px}.spacer{flex:1}
+button{border:0;border-radius:12px;padding:11px 15px;background:linear-gradient(100deg,var(--pink),var(--purple));color:white;font-weight:700;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}.ghost{background:#2a2036}.tools{display:flex;gap:10px;align-items:center;margin:14px 0 18px}
+.tools span{color:var(--muted);font-size:12px}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.person{height:290px;border-radius:16px;overflow:hidden;position:relative;background:#2a2036;cursor:pointer}
+.person img{width:100%;height:100%;object-fit:cover}.person:after{content:"";position:absolute;inset:35% 0 0;background:linear-gradient(transparent,#09060ddd)}
+.info{position:absolute;z-index:1;bottom:12px;left:12px}.name{font-weight:800}.dist{font-size:11px;color:#e2d9e9}
+.online{position:absolute;z-index:2;top:12px;left:12px;width:10px;height:10px;background:#43e69a;border:2px solid #100b19;border-radius:50%}
+.like{position:absolute;z-index:2;right:10px;top:8px;background:#160f20bb;padding:6px 9px;border-radius:50%;font-size:20px}
+.nav{position:sticky;bottom:12px;margin:22px auto 0;display:flex;justify-content:space-around;gap:5px;padding:10px;background:#21172d;border:1px solid #382942;border-radius:18px;max-width:700px;z-index:2}
+.nav button{background:transparent;color:var(--muted);padding:10px}.nav button.active{background:#42213e;color:#ff80b5}
+.modal{display:none;position:fixed;inset:0;background:#000b;z-index:5;align-items:center;justify-content:center;padding:18px}
+.dialog{background:var(--panel);padding:20px;border:1px solid var(--line);border-radius:18px;width:min(440px,100%);max-height:90vh;overflow:auto}
+.dialog p,.muted{color:var(--muted)}input,textarea{width:100%;background:#120d1b;color:white;border:1px solid var(--line);border-radius:11px;padding:12px;margin:7px 0 13px;font:inherit}
+textarea{min-height:76px;resize:vertical}label{font-size:13px;color:#e9dfee}
+.reels-head{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}
+.reel-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.reel-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.reel-card video{width:100%;aspect-ratio:9/14;object-fit:cover;background:#08060d;display:block}
+.reel-meta{padding:12px}.status{font-size:11px;color:#ffd27b}.empty{padding:35px 18px;text-align:center;background:var(--panel);border:1px dashed var(--line);border-radius:16px;color:var(--muted)}
+#notice{font-size:13px;color:#ffd27b;min-height:20px;margin:8px 0}
+@media(max-width:760px){.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.person{height:220px}.app{padding:12px}.brand{font-size:21px}.reel-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.person{height:180px}.name{font-size:12px}.nav{gap:0}.nav button{font-size:11px;padding:9px 6px}.reel-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="top">
+ <div><div class="brand">BONDINGS</div><div class="tag">Find your kind of connection</div></div>
+ <div class="spacer"></div><button id="authBtn" class="ghost">Sign in</button>
+</header>
+<section id="discoverView">
+ <div class="tools"><b>● NEAR YOU</b><div class="spacer"></div><span>Sample profiles</span></div>
+ <section class="grid" id="grid"></section>
+</section>
+<section id="reelsView" hidden>
+ <div class="reels-head"><div><h2 style="margin:0">▶ BONDINGS Reels</h2><div class="muted">Members-only videos · New uploads are reviewed before appearing</div></div><div class="spacer"></div><button id="uploadOpen">＋ Create Reel</button></div>
+ <div id="notice"></div><div id="reelsFeed" class="reel-grid"></div>
+</section>
+<nav class="nav">
+ <button class="active" onclick="showTab('Discover',this)">▦ Discover</button>
+ <button onclick="showTab('Reels',this)">▶ Reels</button>
+ <button onclick="showTab('Likes',this)">♡ Likes</button>
+ <button onclick="showTab('Chat',this)">▢ Chat</button>
+ <button onclick="showTab('Premium',this)">♛ Premium</button>
+ <button onclick="showTab('Profile',this)">◉ Profile</button>
+</nav>
+</main>
+<div class="modal" id="modal"><div class="dialog" id="dialog"></div></div>
+<div class="modal" id="uploadModal"><div class="dialog">
+ <h2 style="margin-top:0">Create a Reel</h2>
+ <p class="muted">Choose a video. It will be private while pending review.</p>
+ <label>Video (MP4, WebM or MOV; max 50 MB)</label><input id="reelFile" type="file" accept="video/mp4,video/webm,video/quicktime">
+ <label>Caption</label><textarea id="reelCaption" maxlength="2200" placeholder="Write a caption..."></textarea>
+ <div id="uploadMessage" class="muted"></div>
+ <button id="uploadBtn">Upload Reel</button> <button class="ghost" id="uploadCancel">Cancel</button>
+</div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL='https://cmtxnadwoaleyzcmjdkn.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_LqwR91cHfb6jaDFSRktymA_lrs6Pw3';
+const BUCKET='bondings-reels';
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+let currentUser=null, likes=new Set();
+const people=[
+ ['Aarav',25,'1 km away','https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600'],
+ ['Rohan',27,'2 km away','https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600'],
+ ['Kiran',24,'3 km away','https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600'],
+ ['Dev',29,'4 km away','https://images.unsplash.com/photo-1535713875002-d1d0cf3771d0?w=600'],
+ ['Sam',26,'5 km away','https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=600'],
+ ['Aditya',28,'6 km away','https://images.unsplash.com/photo-1504593811423-6dd665756598?w=600'],
+ ['Neil',26,'7 km away','https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600'],
+ ['Arjun',30,'8 km away','https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600']
+];
+const grid=document.querySelector('#grid');
+people.forEach((p,i)=>{const c=document.createElement('article');c.className='person';c.innerHTML=`<img src="${p[3]}" alt="Sample profile photo"><span class="online"></span><button class="like" aria-label="Like profile">♡</button><div class="info"><div class="name">${p[0]}, ${p[1]}</div><div class="dist">${p[2]}</div></div>`;c.querySelector('.like').onclick=e=>{e.stopPropagation();likes.has(i)?likes.delete(i):likes.add(i);e.currentTarget.textContent=likes.has(i)?'♥':'♡'};c.onclick=()=>openDialog(`<h2>${p[0]}, ${p[1]}</h2><p>${p[2]} · Sample profile preview</p><button onclick="closeDialog()">Close</button>`);grid.append(c)});
+function openDialog(content){document.querySelector('#dialog').innerHTML=content;document.querySelector('#modal').style.display='flex'}
+function closeDialog(){document.querySelector('#modal').style.display='none'}
+document.querySelector('#modal').onclick=e=>{if(e.target.id==='modal')closeDialog()};
+function setNotice(s){document.querySelector('#notice').textContent=s}
+function showTab(t,b){document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');const isReels=t==='Reels';document.querySelector('#discoverView').hidden=isReels;document.querySelector('#reelsView').hidden=!isReels;if(isReels)loadReels();else if(t!=='Discover')openDialog(`<h2>${t}</h2><p>${t==='Likes'?likes.size+' sample profiles liked':t==='Premium'?'Plus ₹199/month · Premium ₹399/month — demo pricing; payments are not connected':t==='Chat'?'Live messaging is not connected yet':'Profile settings are not connected yet'}</p><button onclick="closeDialog()">Close</button>`)}
+async function refreshAuth(){const {data:{session}}=await db.auth.getSession();currentUser=session?.user||null;document.querySelector('#authBtn').textContent=currentUser?'Sign out':'Sign in'}
+async function ensureProfile(){
+ if(!currentUser)return false;
+ const {data,error}=await db.from('profiles').select('id,display_name').eq('id',currentUser.id).maybeSingle();
+ if(error)throw error;if(data)return true;
+ const suggested=currentUser.user_metadata?.display_name||currentUser.email?.split('@')[0]||'Member';
+ const display_name=prompt('Choose your BONDINGS display name:',suggested);
+ if(!display_name||!display_name.trim())return false;
+ const {error:insertError}=await db.from('profiles').insert({id:currentUser.id,display_name:display_name.trim().slice(0,40)});
+ if(insertError)throw insertError;return true;
+}
+async function authDialog(){
+ if(currentUser){const {error}=await db.auth.signOut();if(error)alert(error.message);await refreshAuth();setNotice('Signed out.');return}
+ openDialog(`<h2>Welcome to BONDINGS</h2><p class="muted">Sign in or create your member account to use Reels.</p><label>Email</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="At least 6 characters"><label>Display name (for new account)</label><input id="authName" maxlength="40" placeholder="Your name"><div id="authMessage" class="muted"></div><button id="signInBtn">Sign in</button> <button id="signUpBtn" class="ghost">Create account</button>`);
+ document.querySelector('#signInBtn').onclick=async()=>{const email=document.querySelector('#authEmail').value.trim(),password=document.querySelector('#authPassword').value;const m=document.querySelector('#authMessage');m.textContent='Signing in...';const {error}=await db.auth.signInWithPassword({email,password});if(error){m.textContent=error.message;return}await refreshAuth();closeDialog();setNotice('Signed in successfully.')};
+ document.querySelector('#signUpBtn').onclick=async()=>{const email=document.querySelector('#authEmail').value.trim(),password=document.querySelector('#authPassword').value,name=document.querySelector('#authName').value.trim(),m=document.querySelector('#authMessage');if(!name){m.textContent='Please enter a display name.';return}if(password.length<6){m.textContent='Password must be at least 6 characters.';return}m.textContent='Creating account...';const {data,error}=await db.auth.signUp({email,password,options:{data:{display_name:name}}});if(error){m.textContent=error.message;return}if(data.session){currentUser=data.user;const {error:pe}=await db.from('profiles').upsert({id:data.user.id,display_name:name.slice(0,40)});if(pe){m.textContent='Account created, but profile setup failed: '+pe.message;return}await refreshAuth();closeDialog();setNotice('Account created. Welcome!')}else{m.textContent='Check your email to confirm your account, then sign in. Profile setup will finish after sign-in.'}};
+}
+document.querySelector('#authBtn').onclick=authDialog;
+db.auth.onAuthStateChange(async(_event,session)=>{currentUser=session?.user||null;document.querySelector('#authBtn').textContent=currentUser?'Sign out':'Sign in'});
+document.querySelector('#uploadOpen').onclick=async()=>{if(!currentUser){await authDialog();return}try{const ok=await ensureProfile();if(!ok)return;document.querySelector('#uploadMessage').textContent='';document.querySelector('#reelFile').value='';document.querySelector('#reelCaption').value='';document.querySelector('#uploadModal').style.display='flex'}catch(e){setNotice('Profile error: '+e.message)}};
+document.querySelector('#uploadCancel').onclick=()=>document.querySelector('#uploadModal').style.display='none';
+document.querySelector('#uploadModal').onclick=e=>{if(e.target.id==='uploadModal')e.currentTarget.style.display='none'};
+document.querySelector('#uploadBtn').onclick=uploadReel;
+async function uploadReel(){
+ const file=document.querySelector('#reelFile').files[0],caption=document.querySelector('#reelCaption').value.trim(),msg=document.querySelector('#uploadMessage'),btn=document.querySelector('#uploadBtn');
+ if(!currentUser){msg.textContent='Please sign in first.';return}
+ if(!file){msg.textContent='Choose a video file first.';return}
+ if(file.size>50*1024*1024){msg.textContent='Video must be 50 MB or smaller.';return}
+ const allowed=['video/mp4','video/webm','video/quicktime'];if(!allowed.includes(file.type)){msg.textContent='Use an MP4, WebM or MOV video.';return}
+ btn.disabled=true;msg.textContent='Uploading video...';
+ try{
+  const ext=(file.name.split('.').pop()||'mp4').toLowerCase().replace(/[^a-z0-9]/g,'')||'mp4';
+  const path=currentUser.id+'/'+(crypto.randomUUID?crypto.randomUUID():Date.now())+'.'+ext;
+  const {error:upErr}=await db.storage.from(BUCKET).upload(path,file,{contentType:file.type,upsert:false});
+  if(upErr)throw upErr;
+  msg.textContent='Saving reel details...';
+  const {error:rowErr}=await db.from('reels').insert({profile_id:currentUser.id,caption,video_path:path,status:'pending'});
+  if(rowErr){await db.storage.from(BUCKET).remove([path]);throw rowErr}
+  msg.textContent='Uploaded! Your Reel is pending review.';
+  setNotice('Reel uploaded and waiting for moderation approval.');
+  setTimeout(()=>{document.querySelector('#uploadModal').style.display='none';loadReels()},900);
+ }catch(e){msg.textContent='Upload failed: '+e.message}
+ finally{btn.disabled=false}
+}
+async function loadReels(){
+ const feed=document.querySelector('#reelsFeed');feed.innerHTML='<div class="empty">Loading member Reels…</div>';
+ if(!currentUser){feed.innerHTML='<div class="empty">Sign in with a BONDINGS member account to watch Reels.<br><br><button onclick="document.querySelector(\\'#authBtn\\').click()">Sign in</button></div>';return}
+ try{
+  const {data:rows,error}=await db.from('reels').select('id,profile_id,caption,video_path,status,created_at').or(`status.eq.approved,profile_id.eq.${currentUser.id}`).order('created_at',{ascending:false}).limit(30);
+  if(error)throw error;
+  if(!rows?.length){feed.innerHTML='<div class="empty">No approved Reels yet. Be the first to upload one!</div>';return}
+  const profileIds=[...new Set(rows.map(r=>r.profile_id))];
+  const {data:profiles,error:profileError}=await db.from('profiles').select('id,display_name,avatar_url').in('id',profileIds);
+  if(profileError)throw profileError;
+  const pmap=new Map((profiles||[]).map(p=>[p.id,p]));
+  feed.innerHTML='';
+  for(const r of rows){
+   const {data:signed,error:signErr}=await db.storage.from(BUCKET).createSignedUrl(r.video_path,3600);
+   const card=document.createElement('article');card.className='reel-card';
+   const profile=pmap.get(r.profile_id);const title=profile?.display_name||'BONDINGS member';
+   if(signErr){card.innerHTML='<div class="empty">Video is currently unavailable.</div>'}
+   else{const video=document.createElement('video');video.src=signed.signedUrl;video.controls=true;video.playsInline=true;video.preload='metadata';card.append(video)}
+   const meta=document.createElement('div');meta.className='reel-meta';
+   const cap=document.createElement('div');cap.textContent=r.caption||'';
+   const who=document.createElement('div');who.className='muted';who.style.marginTop='6px';who.textContent=title;
+   meta.append(cap,who);
+   if(r.status==='pending'){const s=document.createElement('div');s.className='status';s.textContent='Pending moderation';meta.append(s)}
+   card.append(meta);feed.append(card);
+  }
+ }catch(e){feed.innerHTML='';const box=document.createElement('div');box.className='empty';box.textContent='Could not load Reels: '+e.message;feed.append(box)}
+}
+refreshAuth();
+</script>
+</body>
+</html>
