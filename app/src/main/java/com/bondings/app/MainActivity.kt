@@ -129,21 +129,39 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable private fun OtherPage(tab:String, likes:Int, back:()->Unit) {
-    Column(Modifier.weight(1f).fillMaxWidth().padding(22.dp), verticalArrangement=Arrangement.spacedBy(14.dp)) {
+    Column(
+        Modifier.fillMaxWidth().padding(22.dp),
+        verticalArrangement=Arrangement.spacedBy(14.dp)
+    ) {
         Text(tab, color=Color.White, fontSize=26.sp, fontWeight=FontWeight.Bold)
+
         when(tab) {
-            "Likes" -> { Text("$likes profiles liked", color=Muted); Text("Your liked profiles will appear here.", color=Muted) }
-            "Chat" -> { Text("Your conversations", color=Muted); Text("No conversations yet. Discover someone and say hello!", color=Muted) }
+            "Likes" -> {
+                Text("$likes profiles liked", color=Muted)
+                Text("Your liked profiles will appear here.", color=Muted)
+            }
+            "Chat" -> {
+                Text("Your conversations", color=Muted)
+                Text("No conversations yet. Discover someone and say hello!", color=Muted)
+            }
             "Premium" -> {
                 Text("More ways to connect", color=Muted)
                 PlanCard("BONDINGS PLUS", "₹199 / month", listOf("See who likes you","More profile filters","Ad-free experience"))
                 PlanCard("BONDINGS PREMIUM", "₹399 / month", listOf("All Plus features","Profile boosts","Priority discovery"))
                 Text("Demo pricing only — payments are not connected.", color=Muted, fontSize=11.sp)
             }
-            else -> { Text("Your profile", color=Muted); Text("Set up your photos, bio and preferences.", color=Muted); Button(onClick=back, colors=ButtonDefaults.buttonColors(containerColor=Pink)){Text("Back to Discover")} }
+            else -> {
+                Text("Your profile", color=Muted)
+                Text("Set up your photos, bio and preferences.", color=Muted)
+                Button(onClick=back, colors=ButtonDefaults.buttonColors(containerColor=Pink)) {
+                    Text("Back to Discover")
+                }
+            }
         }
     }
 }
+
+
 @Composable private fun PlanCard(title:String, price:String, features:List<String>) {
     Card(colors=CardDefaults.cardColors(containerColor=Panel), shape=RoundedCornerShape(18.dp)) { Column(Modifier.padding(17.dp), verticalArrangement=Arrangement.spacedBy(8.dp)) { Text(title, color=Pink, fontWeight=FontWeight.Bold); Text(price, color=Color.White, fontSize=22.sp, fontWeight=FontWeight.Bold); features.forEach { Text("✓  $it", color=Muted, fontSize=13.sp) }; OutlinedButton(onClick={}, enabled=false){Text("Coming soon")} } }
 }
